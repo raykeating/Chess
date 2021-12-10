@@ -1,0 +1,30 @@
+To-do for the Chess Project
+
+For the main game logic
+
+-define board representation (numpy array?)
+-load a board state from a FEN string
+-figure out how "moves" will be defined
+-define a "movePiece" function that creates a new board state given a "move"
+-define a "capture" function used by "movePiece" to determine whether or not a given move results in a capture
+-define allowable moves for each piece
+-define "check" and "checkmate" in some kind of "checkForCheckmate" function
+-define other rules like en passante, castling, pawn swaps, etc.
+
+For the AI
+
+-figure out the heuristic(s) to create an evaluation function for a given board. 
+-implement the minimax algorithm
+-implement AB pruning
+
+For the UI
+
+-first, set up a basic command line GUI 
+-once a viable amount of the game has been made, (perhaps once players can move pieces), set up the pygame GUI so that pieces can be moved via the GUI
+-next, highlight squares where the players can legally move pieces
+-finally, create some kind of way to display messages to the user such as "you win" or "check" or "checkmate"
+
+Additional Features
+
+-See where you're at, and do what you can do. If there's extra time, try implementing the heuristic/AI a different way, or adding some extra GUI features.  
+-Maybe the heuristic function could make use of a neural network/self-play?  See what is out there
