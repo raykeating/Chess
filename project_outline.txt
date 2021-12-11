@@ -2,14 +2,14 @@ To-do for the Chess Project
 
 For the main game logic
 
--define board representation (numpy array?)
--load a board state from a FEN string
+-define board representation (numpy array?) ✓
+-load a board state from a FEN string ✓
 -figure out how "moves" will be defined
 -define a "movePiece" function that creates a new board state given a "move"
 -define a "capture" function used by "movePiece" to determine whether or not a given move results in a capture
 -define allowable moves for each piece
 -define "check" and "checkmate" in some kind of "checkForCheckmate" function
--define other rules like en passante, castling, pawn swaps, etc.
+-define other rules like en passante, castling, pawn swaps, fifty-move rule, etc.
 
 For the AI
 
