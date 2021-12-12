@@ -19,7 +19,7 @@ For the AI
 
 For the UI
 
--first, set up a basic command line GUI 
+-first, set up a basic command line GUI ✓
 -once a viable amount of the game has been made, (perhaps once players can move pieces), set up the pygame GUI so that pieces can be moved via the GUI
 -next, highlight squares where the players can legally move pieces
 -finally, create some kind of way to display messages to the user such as "you win" or "check" or "checkmate"
