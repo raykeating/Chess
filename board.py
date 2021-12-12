@@ -38,7 +38,7 @@ class BoardState:
 
         board = fen.split(' ')[0]
         self.board = self.parse_board(board)
-        self.next_move = fen.split(' ')[1]
+        self.next_move = 1 if fen.split(' ')[1] == 'w' else 0
 
     def parse_board(self, board:str):
         fen_ranks = board.split('/')
