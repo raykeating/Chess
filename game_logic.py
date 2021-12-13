@@ -1,5 +1,4 @@
 from board import BoardState
-import pieces
 import math
 
 class Game:
