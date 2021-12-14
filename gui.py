@@ -8,6 +8,7 @@ pg.display.set_caption('Chess')
 clock = pg.time.Clock()
 
 def load_images():
+
     piece_imgs = []
     for i in range(12):
         img = pg.image.load(f'Pieces/{(i+1)}.png').convert_alpha()
@@ -15,7 +16,12 @@ def load_images():
         piece_imgs.append(img)
     return piece_imgs
 
+# loads pieces
 piece_imgs = load_images()
+
+circle_img = pg.image.load("circle.png").convert_alpha()
+circle_img = pg.transform.smoothscale(circle_img, (10,10))
+
 
 def draw_board():
     squares = []
@@ -42,6 +48,15 @@ def draw_board():
     
     return squares
 
+def highlight(legal_moves:list, board:BoardState):
+    highlight_square = pg.Surface((100,100))
+    highlight_square.fill(pg.Color(255,255,0))
+    highlight_square.set_alpha(80)
+
+    for move in legal_moves:
+        rank = move[1]*100
+        file = move[0]*100
+        screen.blit(circle_img, circle_img.get_rect(x=rank+45,y=file+45)) if board[move[0]][move[1]] == 0 else screen.blit(highlight_square, (rank, file))
 
 def draw_pieces(board:BoardState):
     active_pieces = []
@@ -79,6 +94,9 @@ def run_game():
                 exit()
 
             elif event.type == pg.MOUSEBUTTONDOWN:
+
+                # --- DRAG AND DROP LOGIC ---
+
                 print('mousedown')
                 # get the click position
                 click_pos = event.pos
@@ -87,6 +105,9 @@ def run_game():
                 if len(clicked_pieces) > 0:
                     clicked_piece = clicked_pieces[0]
                     dragging = True
+                    # --- HIGHLIGHT LEGAL MOVES ---
+                    if clicked_piece[0] % 2 == game.next_move: 
+                        highlight(game.get_legal_moves(clicked_piece), game.board.board)
                 else:
                     continue
 
@@ -95,10 +116,13 @@ def run_game():
                     print('clicked piece: ', clicked_piece)
                 else:
                     print('that is not your piece')
-                    clicked_piece = None                 
+                    clicked_piece = None         
+
+                   
 
             # when a player releases the mouse to move a piece
             elif event.type == pg.MOUSEBUTTONUP:
+                # --- DRAG AND DROP LOGIC ---
                 print('mouseup')
                 # if a piece has been clicked beforehand
                 print(clicked_piece)
@@ -133,6 +157,7 @@ def run_game():
                 pieces = draw_pieces(game.board)
 
             elif event.type == pg.MOUSEMOTION:
+                # --- DRAG AND DROP LOGIC ---
                 if clicked_piece and dragging:
                     hover_piece = clicked_piece[2].copy()
                     mouse_x, mouse_y = event.pos

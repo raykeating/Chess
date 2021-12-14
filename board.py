@@ -25,7 +25,7 @@ def get_symbol(piece:int, invert_colors:bool):
 class BoardState:
     # board - an 8x8 numpy array representing the actual pieces on the board.  Pieces are represented as integers. 
     board = None
-    next_move = None # nextMove - 'w' or 'b'.  Indicates who's move it is
+    next_move = None # nextMove - 0 or 1.  Indicates who's move it is.  (0 for black, 1 for white)
 
     # castling = boolean array, index 0,1 indicate if white can castle kingside or queenside (respectively), 
     # index 2,3 indicate if black can castle kingside, queenside (respectively)
@@ -85,4 +85,223 @@ class BoardState:
         # return numpy array of the ranks.
         return np.array(int_ranks)
 
-    
+    def legal_pawn_moves(self, color, rank, file):
+        legal_moves = []
+        
+        # LEGAL MOVES FOR WHITE
+        if color == 'w':
+            # allows pawns to move 2 squares on their first move.
+            if rank == 6 and self.board[4][file] == 0:
+                legal_moves.append((4, file))
+        
+            # if the square infront of a pawn is empty, it can move there
+            try:
+                if self.board[rank-1][file] == 0:
+                    legal_moves.append(((rank-1), file))
+            except IndexError:
+                pass
+
+            # check if left or right diagonal captures are possible
+            try:
+                if self.board[rank-1][file+1] != 0 and self.board[rank-1][file+1] % 2 == 0:
+                    legal_moves.append(((rank-1),(file+1)))
+            except IndexError:
+                pass
+
+            try:
+                if self.board[rank-1][file-1] != 0 and self.board[rank-1][file-1] % 2 == 0:
+                    legal_moves.append(((rank-1),(file-1)))
+            except IndexError:
+                pass
+        
+        # LEGAL MOVES FOR BLACK
+        elif color == 'b':
+            # allows pawns to move 2 squares on their first move.
+            if rank == 1 and self.board[3][file] == 0: #check if indexing is right here
+                legal_moves.append((3, file))
+            
+            # if the square infront of a pawn is empty, it can move there
+            if self.board[rank+1][file] == 0:
+                legal_moves.append(((rank+1), file))
+
+            # check if left or right diagonal captures are possible
+            try:
+                if self.board[rank+1][file+1] != 0 and self.board[rank+1][file+1] % 2 == 1:
+                    legal_moves.append(((rank+1),(file+1)))
+            except IndexError:
+                pass
+
+            try:
+                if self.board[rank+1][file-1] != 0 and self.board[rank+1][file-1] % 2 == 1:
+                    legal_moves.append(((rank+1),(file-1)))
+            except IndexError:
+                pass
+
+        else:
+            return ValueError("wrong color argument")
+        return legal_moves
+
+    def legal_rook_moves(self, color, rank, file):
+        
+        legal_moves = []
+
+        # downwards
+        counter = 1
+        while rank+counter < 8:
+            if self.board[rank + counter][file] == 0:
+                legal_moves.append((rank+counter,file))
+            elif color == 'w' and self.board[rank + counter][file] % 2 == 0:
+                legal_moves.append((rank+counter,file))
+                break
+            elif color == 'b' and self.board[rank + counter][file] % 2 == 1:
+                legal_moves.append((rank+counter,file))
+                break
+            else:
+                break
+            counter += 1
+
+        # upwards
+        counter = 1
+        while rank-counter > -1:
+            if self.board[rank - counter][file] == 0:
+                legal_moves.append((rank-counter,file))
+            elif color == 'w' and self.board[rank - counter][file] % 2 == 0:
+                legal_moves.append((rank-counter,file))
+                break
+            elif color == 'b' and self.board[rank - counter][file] % 2 == 1:
+                legal_moves.append((rank-counter,file))
+                break
+            else:
+                break
+            counter += 1
+        
+        # right
+        counter = 1
+        while file+counter < 8:
+            if self.board[rank][file + counter] == 0:
+                legal_moves.append((rank,(file+counter)))
+            elif color == 'w' and self.board[rank][file + counter] % 2 == 0:
+                legal_moves.append((rank,(file+counter)))
+                break
+            elif color == 'b' and self.board[rank][file + counter] % 2 == 1:
+                legal_moves.append((rank,(file+counter)))
+                break
+            else:
+                break
+            counter += 1
+
+        # left
+        counter = 1
+        while file-counter > -1:
+            if self.board[rank][file - counter] == 0:
+                legal_moves.append((rank,(file-counter)))
+            elif color == 'w' and self.board[rank][file - counter] % 2 == 0:
+                legal_moves.append((rank,(file-counter)))
+                break
+            elif color == 'b' and self.board[rank][file - counter] % 2 == 1:
+                legal_moves.append((rank,(file-counter)))
+                break
+            else:
+                break
+            counter += 1
+            
+        return legal_moves
+
+    def legal_bishop_moves(self, color, rank, file):
+        
+        legal_moves = []
+
+        # diagonal from piece to top-left
+        counter = 1
+        while True:
+            try:
+                if self.board[rank - counter][file - counter] == 0:
+                    legal_moves.append((rank-counter,file-counter))
+                elif color == 'w' and self.board[rank - counter][file - counter] % 2 == 0:
+                    legal_moves.append((rank-counter,file-counter))
+                    break
+                elif color == 'b' and self.board[rank - counter][file - counter] % 2 == 1:
+                    legal_moves.append((rank-counter,file-counter))
+                    break
+                else:
+                    break
+                counter += 1
+            except IndexError:
+                break
+        
+        # diagonal from piece to top-right
+        counter = 1
+        while True:
+            try:
+                if self.board[rank - counter][file + counter] == 0:
+                    legal_moves.append((rank-counter,file+counter))
+                elif color == 'w' and self.board[rank - counter][file + counter] % 2 == 0:
+                    legal_moves.append((rank-counter,file+counter))
+                    break
+                elif color == 'b' and self.board[rank - counter][file + counter] % 2 == 1:
+                    legal_moves.append((rank-counter,file+counter))
+                    break
+                else:
+                    break
+                counter += 1
+            except IndexError:
+                break
+        
+        # diagonal from piece to bottom-left
+        counter = 1
+        while True:
+            try:
+                if self.board[rank + counter][file + counter] == 0:
+                    legal_moves.append((rank+counter,file+counter))
+                elif color == 'w' and self.board[rank + counter][file + counter] % 2 == 0:
+                    legal_moves.append((rank+counter,file+counter))
+                    break
+                elif color == 'b' and self.board[rank + counter][file + counter] % 2 == 1:
+                    legal_moves.append((rank+counter,file+counter))
+                    break
+                else:
+                    break
+                counter += 1
+            except IndexError:
+                break
+        
+        # diagonal from piece to bottom-right
+        counter = 1
+        while True:
+            try:
+                if self.board[rank + counter][file - counter] == 0:
+                    legal_moves.append((rank+counter,file-counter))
+                elif color == 'w' and self.board[rank + counter][file - counter] % 2 == 0:
+                    legal_moves.append((rank+counter,file-counter))
+                    break
+                elif color == 'b' and self.board[rank + counter][file - counter] % 2 == 1:
+                    legal_moves.append((rank+counter,file-counter))
+                    break
+                else:
+                    break
+                counter += 1
+            except IndexError:
+                break
+
+        return legal_moves
+
+    def legal_knight_moves(self, color, rank, file):
+        legal_moves = []
+        offsets = [(2,1),(2,-1),(1,-2),(1,2),(-1,2),(-1,-2),(-2,1),(-2,-1)]
+        for x, y in offsets:
+            print(rank+x,file+y)
+            try:
+                if self.board[rank+x][file+y] == 0:
+                    legal_moves.append((rank+x,file+y))
+                elif color == 'w' and self.board[rank+x][file+y] % 2 == 0:
+                    legal_moves.append((rank+x,file+y))
+                elif color == 'b' and self.board[rank+x][file+y] % 2 == 1:
+                    legal_moves.append((rank+x,file+y))
+                else:
+                    continue
+            except IndexError:
+                continue
+        
+        return legal_moves
+        
+
