@@ -1,9 +1,14 @@
 import pygame as pg
-from game_logic import Game, BoardState
+from controller import Game, BoardState
+from ai import evaluate
 
 # General Setup
 screen = pg.display.set_mode((800,800))
 pg.init()
+pg.font.init()
+default_font = pg.font.get_default_font()
+large_font = pg.font.Font(default_font, 40)
+small_font = pg.font.Font(default_font, 20)
 pg.display.set_caption('Chess')
 clock = pg.time.Clock()
 
@@ -53,10 +58,13 @@ def highlight(legal_moves:list, board:BoardState):
     highlight_square.fill(pg.Color(255,255,0))
     highlight_square.set_alpha(80)
 
-    for move in legal_moves:
-        rank = move[1]*100
-        file = move[0]*100
-        screen.blit(circle_img, circle_img.get_rect(x=rank+45,y=file+45)) if board[move[0]][move[1]] == 0 else screen.blit(highlight_square, (rank, file))
+    try:
+        for move in legal_moves:
+            rank = move[1]*100
+            file = move[0]*100
+            screen.blit(circle_img, circle_img.get_rect(x=rank+45,y=file+45)) if board[move[0]][move[1]] == 0 else screen.blit(highlight_square, (rank, file))
+    except TypeError:
+        pass
 
 def draw_pieces(board:BoardState):
     active_pieces = []
@@ -74,6 +82,17 @@ def draw_pieces(board:BoardState):
     # Each item in the list contains the pieces int value at [0], the image (surface) at [1], and it's rect at [2] 
     return active_pieces
 
+def display_gameover_message(player):
+    message_surf = pg.Surface((350,160))
+    message_surf.fill(pg.Color(255,0,0))
+    message_surf.set_alpha(100)
+    message_rect = message_surf.get_rect(x=225,y=320)
+    screen.blit(message_surf, message_rect)
+    text_surface_top = large_font.render('GAME OVER!', True, (0,0,0))
+    text_surface_bottom = small_font.render(f'{player} is in Checkmate', True, (0,0,0))
+    screen.blit(text_surface_top, (275,360))
+    screen.blit(text_surface_bottom, (290,410))
+
 def run_game():
     game = Game()
 
@@ -82,11 +101,17 @@ def run_game():
 
     hover_piece = None
     clicked_piece = None
+    legal_moves = None
     click_pos = None
     dragging = False
 
     # main event loop
     while True:
+        if game.current_move == 0: # if it's black's turn
+                game.move_piece_with_ai(depth=3)
+                draw_board()
+                pieces = draw_pieces(game.board)
+
         for event in pg.event.get():
             # enable close button
             if event.type == pg.QUIT:
@@ -97,7 +122,6 @@ def run_game():
 
                 # --- DRAG AND DROP LOGIC ---
 
-                print('mousedown')
                 # get the click position
                 click_pos = event.pos
                 # get any pieces that are at the click position
@@ -106,26 +130,22 @@ def run_game():
                     clicked_piece = clicked_pieces[0]
                     dragging = True
                     # --- HIGHLIGHT LEGAL MOVES ---
-                    if clicked_piece[0] % 2 == game.next_move: 
-                        highlight(game.get_legal_moves(clicked_piece), game.board.board)
+                    if clicked_piece[0] % 2 == game.current_move: 
+                        legal_moves = game.get_legal_moves(clicked_piece[2])
+                        highlight(legal_moves, game.board.board)
                 else:
                     continue
 
-                # if the player clicked their own color's piece, move it.  Otherwise, print error
-                if clicked_piece[0] % 2 == game.next_move:
-                    print('clicked piece: ', clicked_piece)
+                # if the player clicked their own color's piece, move it.  Otherwise, set clicked_piece to None
+                if clicked_piece[0] % 2 == game.current_move:
+                    pass
                 else:
-                    print('that is not your piece')
                     clicked_piece = None         
 
-                   
-
             # when a player releases the mouse to move a piece
-            elif event.type == pg.MOUSEBUTTONUP:
+            elif event.type == pg.MOUSEBUTTONUP and clicked_piece:
                 # --- DRAG AND DROP LOGIC ---
-                print('mouseup')
                 # if a piece has been clicked beforehand
-                print(clicked_piece)
                 if clicked_piece:
                     # get the position where the mouse was released
                     release_pos = event.pos
@@ -133,11 +153,9 @@ def run_game():
                     captured_pieces = [p for p in pieces if p[2].collidepoint(release_pos)]
                     if len(captured_pieces) > 0: 
                         captured_piece = captured_pieces[0]
-                        if captured_piece[0] % 2 != game.next_move: # if so, check if it is the opponent's piece (modulo because black is even, white is odd)
-                            print("a piece was captured!")
-                            game.move_piece(click_pos[0],click_pos[1],release_pos[0], release_pos[1], clicked_piece[0]) # move the piece
+                        if captured_piece[0] % 2 != game.current_move: # if so, check if it is the opponent's piece (modulo because black is even, white is odd)
+                            game.move_piece(click_pos[1],click_pos[0],release_pos[1], release_pos[0]) # move the piece
                             pieces = draw_pieces(game.board) 
-                            game.next_move = 1 if game.next_move == 0 else 0 # change to next move
                         else:
                             clicked_piece = None
                             hover_piece = None
@@ -147,14 +165,19 @@ def run_game():
                             continue # if the piece has been released on a piece of their own color, don't do anything.
                     else:
                         # if there are no pieces where the mouse was released, just move it to that square.
-                        game.move_piece(click_pos[0],click_pos[1],release_pos[0], release_pos[1], clicked_piece[0])
+                        game.move_piece(click_pos[1],click_pos[0],release_pos[1], release_pos[0])
                         pieces = draw_pieces(game.board) 
-                        game.next_move = 1 if game.next_move == 0 else 0 # change to next move
                 clicked_piece = None
+                legal_moves = None
                 hover_piece = None
                 dragging = False
                 draw_board()
                 pieces = draw_pieces(game.board)
+                game.check_for_checkmate()
+                if game.board.black_checkmated:
+                    display_gameover_message("Black")
+                elif game.board.white_checkmated:
+                    display_gameover_message("White")
 
             elif event.type == pg.MOUSEMOTION:
                 # --- DRAG AND DROP LOGIC ---
@@ -164,6 +187,7 @@ def run_game():
                     hover_piece.center = (mouse_x, mouse_y)
                     draw_board()
                     draw_pieces(game.board)
+                    highlight(legal_moves, game.board.board)
                     [screen.blit(s[0],s[1]) for s in squares if pg.Rect.colliderect(s[1], clicked_piece[2])]
                     screen.blit(clicked_piece[1], hover_piece)
                                 
